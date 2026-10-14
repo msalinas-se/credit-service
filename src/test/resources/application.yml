@@ -1,0 +1,13 @@
+spring:
+  application:
+    name: credit-service
+  cloud:
+    config:
+      enabled: false
+
+services:
+  customer:
+    url: http://localhost:8081
+
+credit:
+  personal-max-credits: 1

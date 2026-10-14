@@ -1,0 +1,324 @@
+openapi: 3.0.3
+info:
+  title: Credit Service
+  version: 1.0.0
+servers:
+  - url: http://localhost:8083
+paths:
+  /credits:
+    get:
+      summary: List credits
+      parameters:
+        - $ref: '#/components/parameters/CustomerId'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Credit'
+    post:
+      summary: Create credit
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [customerId, amount]
+              properties:
+                customerId:
+                  type: string
+                amount:
+                  type: number
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Credit'
+        '400':
+          description: Bad request
+  /credits/{id}:
+    parameters:
+      - $ref: '#/components/parameters/Id'
+    get:
+      summary: Get credit
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Credit'
+        '404':
+          description: Not found
+    put:
+      summary: Update credit amount
+      requestBody:
+        $ref: '#/components/requestBodies/Amount'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Credit'
+    delete:
+      summary: Delete credit
+      responses:
+        '204':
+          description: Deleted
+  /credits/{id}/payments:
+    parameters:
+      - $ref: '#/components/parameters/Id'
+    post:
+      summary: Pay credit
+      requestBody:
+        $ref: '#/components/requestBodies/Amount'
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Movement'
+        '400':
+          description: Bad request
+  /credits/{id}/balance:
+    parameters:
+      - $ref: '#/components/parameters/Id'
+    get:
+      summary: Get credit balance
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Balance'
+  /credits/{id}/movements:
+    parameters:
+      - $ref: '#/components/parameters/Id'
+    get:
+      summary: List credit movements
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Movement'
+  /credit-cards:
+    get:
+      summary: List credit cards
+      parameters:
+        - $ref: '#/components/parameters/CustomerId'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/CreditCard'
+    post:
+      summary: Create credit card
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [customerId, creditLimit]
+              properties:
+                customerId:
+                  type: string
+                creditLimit:
+                  type: number
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreditCard'
+        '400':
+          description: Bad request
+  /credit-cards/{id}:
+    parameters:
+      - $ref: '#/components/parameters/Id'
+    get:
+      summary: Get credit card
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreditCard'
+        '404':
+          description: Not found
+    put:
+      summary: Update credit limit
+      requestBody:
+        $ref: '#/components/requestBodies/Amount'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreditCard'
+    delete:
+      summary: Delete credit card
+      responses:
+        '204':
+          description: Deleted
+  /credit-cards/{id}/charges:
+    parameters:
+      - $ref: '#/components/parameters/Id'
+    post:
+      summary: Charge a purchase
+      requestBody:
+        $ref: '#/components/requestBodies/Amount'
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Movement'
+        '400':
+          description: Bad request
+  /credit-cards/{id}/payments:
+    parameters:
+      - $ref: '#/components/parameters/Id'
+    post:
+      summary: Pay credit card
+      requestBody:
+        $ref: '#/components/requestBodies/Amount'
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Movement'
+        '400':
+          description: Bad request
+  /credit-cards/{id}/balance:
+    parameters:
+      - $ref: '#/components/parameters/Id'
+    get:
+      summary: Get credit card balance
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Balance'
+  /credit-cards/{id}/movements:
+    parameters:
+      - $ref: '#/components/parameters/Id'
+    get:
+      summary: List credit card movements
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Movement'
+components:
+  parameters:
+    Id:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: string
+    CustomerId:
+      name: customerId
+      in: query
+      required: false
+      schema:
+        type: string
+  requestBodies:
+    Amount:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required: [amount]
+            properties:
+              amount:
+                type: number
+  schemas:
+    Credit:
+      type: object
+      properties:
+        id:
+          type: string
+        customerId:
+          type: string
+        customerType:
+          type: string
+          enum: [PERSONAL, BUSINESS]
+        amount:
+          type: number
+        outstandingBalance:
+          type: number
+    CreditCard:
+      type: object
+      properties:
+        id:
+          type: string
+        cardNumber:
+          type: string
+        customerId:
+          type: string
+        customerType:
+          type: string
+          enum: [PERSONAL, BUSINESS]
+        creditLimit:
+          type: number
+        availableCredit:
+          type: number
+    Balance:
+      type: object
+      properties:
+        productId:
+          type: string
+        total:
+          type: number
+        available:
+          type: number
+    Movement:
+      type: object
+      properties:
+        id:
+          type: string
+        productId:
+          type: string
+        productType:
+          type: string
+          enum: [CREDIT, CREDIT_CARD]
+        type:
+          type: string
+          enum: [PAYMENT, CHARGE]
+        amount:
+          type: number
+        date:
+          type: string
+          format: date-time
