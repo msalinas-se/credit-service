@@ -22,5 +22,6 @@ public class CreditMovement {
   private ProductType productType;
   private CreditMovementType type;
   private BigDecimal amount;
+  private String payerId;
   private LocalDateTime date;
 }

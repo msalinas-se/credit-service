@@ -10,12 +10,15 @@ Un cliente puede hacer pagos de sus productos de crédito y cargar consumos a su
 
 Reporte general por producto en un intervalo de tiempo y reporte de los últimos 10 movimientos de la tarjeta de crédito.
 
+Un cliente no podrá adquirir un producto si posee alguna deuda vencida en algún producto de crédito. Un cliente puede hacer el pago de cualquier producto de crédito de terceros.
+
 ## Tecnologías
 
 - Java 17
 - Spring Boot
 - Spring Cloud (Config, Eureka, Resilience4j)
 - RxJava
+- Kafka
 - Maven
 - MongoDB
 - Lombok

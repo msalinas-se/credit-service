@@ -8,6 +8,7 @@ import com.nttdata.bank.credit.dto.AmountRequest;
 import com.nttdata.bank.credit.dto.BalanceResponse;
 import com.nttdata.bank.credit.dto.CreditCardRequest;
 import com.nttdata.bank.credit.dto.CreditRequest;
+import com.nttdata.bank.credit.dto.PaymentRequest;
 import com.nttdata.bank.credit.dto.ProductReport;
 import com.nttdata.bank.credit.exception.BusinessRuleException;
 import com.nttdata.bank.credit.exception.ResourceNotFoundException;
@@ -57,7 +58,7 @@ class CreditControllerTest {
     when(creditService.update(eq("1"), any(AmountRequest.class)))
         .thenReturn(Single.just(new Credit()));
     when(creditService.delete("1")).thenReturn(Completable.complete());
-    when(creditService.pay(eq("1"), any(AmountRequest.class)))
+    when(creditService.pay(eq("1"), any(PaymentRequest.class)))
         .thenReturn(Single.just(new CreditMovement()));
     when(creditService.getBalance("1")).thenReturn(Single.just(balance));
     when(creditService.findMovements("1")).thenReturn(Flowable.just(new CreditMovement()));
@@ -85,7 +86,7 @@ class CreditControllerTest {
     when(creditCardService.delete("1")).thenReturn(Completable.complete());
     when(creditCardService.charge(eq("1"), any(AmountRequest.class)))
         .thenReturn(Single.just(new CreditMovement()));
-    when(creditCardService.pay(eq("1"), any(AmountRequest.class)))
+    when(creditCardService.pay(eq("1"), any(PaymentRequest.class)))
         .thenReturn(Single.just(new CreditMovement()));
     when(creditCardService.getBalance("1")).thenReturn(Single.just(balance));
     when(creditCardService.findMovements("1")).thenReturn(Flowable.just(new CreditMovement()));

@@ -1,6 +1,7 @@
 package com.nttdata.bank.credit.model;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -22,4 +23,12 @@ public class CreditCard {
   private CustomerType customerType;
   private BigDecimal creditLimit;
   private BigDecimal availableCredit;
+  private LocalDate paymentDueDate;
+
+  /** Indicates if the card has a pending debt after its payment due date. */
+  public boolean isOverdue() {
+    return availableCredit != null && creditLimit != null
+        && availableCredit.compareTo(creditLimit) < 0 && paymentDueDate != null
+        && paymentDueDate.isBefore(LocalDate.now());
+  }
 }

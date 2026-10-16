@@ -80,3 +80,21 @@ sequenceDiagram
   ReportServiceImpl->>ReportServiceImpl: agrupar por producto
   ReportServiceImpl-->>Postman: 200 OK
 ```
+
+## Secuencia: deuda vencida
+
+```mermaid
+sequenceDiagram
+  Postman->>CreditController: POST /credits
+  CreditController->>CreditServiceImpl: create(request)
+  CreditServiceImpl->>DebtServiceImpl: validateNoOverdueDebt(customerId)
+  alt tiene deuda vencida
+    CreditServiceImpl-->>Postman: 400 OVERDUE_DEBT
+  else
+    CreditServiceImpl->>CreditRepository: save(credit)
+    CreditServiceImpl->>DebtServiceImpl: publishStatus(customerId)
+    DebtServiceImpl->>Kafka: debt-status
+    CreditServiceImpl-->>Postman: 201 Created
+  end
+  Note over DebtScheduler,Kafka: tarea diaria que publica el estado de todos los clientes
+```

@@ -3,6 +3,7 @@ package com.nttdata.bank.credit.controller;
 import com.nttdata.bank.credit.dto.AmountRequest;
 import com.nttdata.bank.credit.dto.BalanceResponse;
 import com.nttdata.bank.credit.dto.CreditCardRequest;
+import com.nttdata.bank.credit.dto.PaymentRequest;
 import com.nttdata.bank.credit.model.CreditCard;
 import com.nttdata.bank.credit.model.CreditMovement;
 import com.nttdata.bank.credit.service.CreditCardService;
@@ -76,7 +77,7 @@ public class CreditCardController {
   @PostMapping("/{id}/payments")
   @ResponseStatus(HttpStatus.CREATED)
   public Single<CreditMovement> pay(@PathVariable String id,
-      @Valid @RequestBody AmountRequest request) {
+      @Valid @RequestBody PaymentRequest request) {
     return creditCardService.pay(id, request);
   }
 

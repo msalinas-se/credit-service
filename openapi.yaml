@@ -33,6 +33,9 @@ paths:
                   type: string
                 amount:
                   type: number
+                dueDate:
+                  type: string
+                  format: date
       responses:
         '201':
           description: Created
@@ -114,9 +117,9 @@ paths:
     parameters:
       - $ref: '#/components/parameters/Id'
     post:
-      summary: Pay credit
+      summary: Pay credit (the payer can be a third party)
       requestBody:
-        $ref: '#/components/requestBodies/Amount'
+        $ref: '#/components/requestBodies/Payment'
       responses:
         '201':
           description: Created
@@ -180,6 +183,9 @@ paths:
                   type: string
                 creditLimit:
                   type: number
+                paymentDueDate:
+                  type: string
+                  format: date
       responses:
         '201':
           description: Created
@@ -239,9 +245,9 @@ paths:
     parameters:
       - $ref: '#/components/parameters/Id'
     post:
-      summary: Pay credit card
+      summary: Pay credit card (the payer can be a third party)
       requestBody:
-        $ref: '#/components/requestBodies/Amount'
+        $ref: '#/components/requestBodies/Payment'
       responses:
         '201':
           description: Created
@@ -306,6 +312,18 @@ components:
       schema:
         type: string
   requestBodies:
+    Payment:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required: [amount]
+            properties:
+              amount:
+                type: number
+              payerId:
+                type: string
     Amount:
       required: true
       content:
@@ -331,6 +349,11 @@ components:
           type: number
         outstandingBalance:
           type: number
+        dueDate:
+          type: string
+          format: date
+        overdue:
+          type: boolean
     CreditCard:
       type: object
       properties:
@@ -347,6 +370,11 @@ components:
           type: number
         availableCredit:
           type: number
+        paymentDueDate:
+          type: string
+          format: date
+        overdue:
+          type: boolean
     Balance:
       type: object
       properties:
@@ -371,6 +399,8 @@ components:
           enum: [PAYMENT, CHARGE]
         amount:
           type: number
+        payerId:
+          type: string
         date:
           type: string
           format: date-time

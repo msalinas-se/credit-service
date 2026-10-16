@@ -5,6 +5,7 @@ import com.nttdata.bank.credit.config.CreditProperties;
 import com.nttdata.bank.credit.dto.AmountRequest;
 import com.nttdata.bank.credit.dto.BalanceResponse;
 import com.nttdata.bank.credit.dto.CreditRequest;
+import com.nttdata.bank.credit.dto.PaymentRequest;
 import com.nttdata.bank.credit.exception.BusinessRuleException;
 import com.nttdata.bank.credit.exception.ResourceNotFoundException;
 import com.nttdata.bank.credit.model.Credit;
@@ -15,9 +16,11 @@ import com.nttdata.bank.credit.model.ProductType;
 import com.nttdata.bank.credit.repository.CreditMovementRepository;
 import com.nttdata.bank.credit.repository.CreditRepository;
 import com.nttdata.bank.credit.service.CreditService;
+import com.nttdata.bank.credit.service.DebtService;
 import io.reactivex.rxjava3.core.Completable;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Single;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -32,17 +35,22 @@ public class CreditServiceImpl implements CreditService {
   private final CreditMovementRepository movementRepository;
   private final CustomerClient customerClient;
   private final CreditProperties creditProperties;
+  private final DebtService debtService;
 
   /** Creates a credit. */
   @Override
   public Single<Credit> create(CreditRequest request) {
     return customerClient.findById(request.customerId())
+        .flatMap(customer -> debtService.validateNoOverdueDebt(customer.id())
+            .toSingleDefault(customer))
         .flatMap(customer -> {
           Credit credit = Credit.builder()
               .customerId(customer.id())
               .customerType(customer.type())
               .amount(request.amount())
               .outstandingBalance(request.amount())
+              .dueDate(request.dueDate() == null
+                  ? LocalDate.now().plusMonths(1) : request.dueDate())
               .build();
           if (customer.type() == CustomerType.BUSINESS) {
             return creditRepository.save(credit);
@@ -53,6 +61,8 @@ public class CreditServiceImpl implements CreditService {
                       "Personal customers can only have one credit"))
                   : creditRepository.save(credit));
         })
+        .flatMap(credit -> debtService.publishStatus(credit.getCustomerId())
+            .toSingleDefault(credit))
         .doOnSuccess(credit -> log.info("Credit created: {}", credit.getId()));
   }
 
@@ -90,7 +100,7 @@ public class CreditServiceImpl implements CreditService {
 
   /** Registers a payment on a credit. */
   @Override
-  public Single<CreditMovement> pay(String id, AmountRequest request) {
+  public Single<CreditMovement> pay(String id, PaymentRequest request) {
     return findById(id)
         .flatMap(credit -> {
           if (request.amount().compareTo(credit.getOutstandingBalance()) > 0) {
@@ -104,8 +114,11 @@ public class CreditServiceImpl implements CreditService {
                   .productType(ProductType.CREDIT)
                   .type(CreditMovementType.PAYMENT)
                   .amount(request.amount())
+                  .payerId(request.payerId())
                   .date(LocalDateTime.now())
-                  .build()));
+                  .build()))
+              .flatMap(movement -> debtService.publishStatus(credit.getCustomerId())
+                  .toSingleDefault(movement));
         })
         .doOnSuccess(movement -> log.info("Payment of {} on credit {}", request.amount(), id));
   }

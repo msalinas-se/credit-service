@@ -3,6 +3,7 @@ package com.nttdata.bank.credit.service;
 import com.nttdata.bank.credit.dto.AmountRequest;
 import com.nttdata.bank.credit.dto.BalanceResponse;
 import com.nttdata.bank.credit.dto.CreditRequest;
+import com.nttdata.bank.credit.dto.PaymentRequest;
 import com.nttdata.bank.credit.model.Credit;
 import com.nttdata.bank.credit.model.CreditMovement;
 import io.reactivex.rxjava3.core.Completable;
@@ -28,7 +29,7 @@ public interface CreditService {
   Completable delete(String id);
 
   /** Registers a payment on a credit. */
-  Single<CreditMovement> pay(String id, AmountRequest request);
+  Single<CreditMovement> pay(String id, PaymentRequest request);
 
   /** Returns the balance of a credit. */
   Single<BalanceResponse> getBalance(String id);

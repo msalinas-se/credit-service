@@ -4,7 +4,9 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 import java.math.BigDecimal;
+import java.time.LocalDate;
 
 /** Payload used to create a credit. */
-public record CreditRequest(@NotBlank String customerId, @NotNull @Positive BigDecimal amount) {
+public record CreditRequest(@NotBlank String customerId, @NotNull @Positive BigDecimal amount,
+    LocalDate dueDate) {
 }

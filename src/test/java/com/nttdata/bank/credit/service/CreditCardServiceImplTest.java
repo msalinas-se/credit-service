@@ -8,6 +8,7 @@ import com.nttdata.bank.credit.client.CustomerClient;
 import com.nttdata.bank.credit.client.dto.CustomerDto;
 import com.nttdata.bank.credit.dto.AmountRequest;
 import com.nttdata.bank.credit.dto.CreditCardRequest;
+import com.nttdata.bank.credit.dto.PaymentRequest;
 import com.nttdata.bank.credit.exception.BusinessRuleException;
 import com.nttdata.bank.credit.exception.ResourceNotFoundException;
 import com.nttdata.bank.credit.model.CreditCard;
@@ -39,16 +40,19 @@ class CreditCardServiceImplTest {
   @Mock
   private CustomerClient customerClient;
 
+  @Mock
+  private DebtService debtService;
+
   private CreditCardServiceImpl creditCardService;
 
   @BeforeEach
   void setUp() {
     creditCardService = new CreditCardServiceImpl(creditCardRepository, movementRepository,
-        customerClient);
+        customerClient, debtService);
   }
 
   private CreditCard card(String available) {
-    return CreditCard.builder().id("cc1").creditLimit(new BigDecimal("1000"))
+    return CreditCard.builder().id("cc1").customerId("1").creditLimit(new BigDecimal("1000"))
         .availableCredit(new BigDecimal(available)).build();
   }
 
@@ -63,11 +67,13 @@ class CreditCardServiceImplTest {
   void createCreditCard() {
     when(customerClient.findById("1"))
         .thenReturn(Single.just(new CustomerDto("1", CustomerType.PERSONAL, "45678912", "Ana")));
+    when(debtService.validateNoOverdueDebt("1")).thenReturn(Completable.complete());
     when(creditCardRepository.save(any(CreditCard.class)))
         .thenAnswer(invocation -> Single.just(invocation.getArgument(0)));
 
-    creditCardService.create(new CreditCardRequest("1", new BigDecimal("1000"))).test()
-        .assertValue(card -> card.getCardNumber().length() == 16);
+    creditCardService.create(new CreditCardRequest("1", new BigDecimal("1000"), null)).test()
+        .assertValue(card -> card.getCardNumber().length() == 16
+            && card.getPaymentDueDate() != null);
   }
 
   @Test
@@ -133,9 +139,10 @@ class CreditCardServiceImplTest {
   void payCard() {
     CreditCard card = card("600");
     when(creditCardRepository.findById("cc1")).thenReturn(Maybe.just(card));
+    when(debtService.publishStatus("1")).thenReturn(Completable.complete());
     saveCardAndMovement();
 
-    creditCardService.pay("cc1", new AmountRequest(new BigDecimal("400"))).test()
+    creditCardService.pay("cc1", new PaymentRequest(new BigDecimal("400"), null)).test()
         .assertComplete();
     assertEquals(0, new BigDecimal("1000").compareTo(card.getAvailableCredit()));
   }
@@ -144,7 +151,7 @@ class CreditCardServiceImplTest {
   void payMoreThanUsed() {
     when(creditCardRepository.findById("cc1")).thenReturn(Maybe.just(card("900")));
 
-    creditCardService.pay("cc1", new AmountRequest(new BigDecimal("400"))).test()
+    creditCardService.pay("cc1", new PaymentRequest(new BigDecimal("400"), null)).test()
         .assertError(BusinessRuleException.class);
   }
 

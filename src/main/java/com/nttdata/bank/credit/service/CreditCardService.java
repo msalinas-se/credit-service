@@ -3,6 +3,7 @@ package com.nttdata.bank.credit.service;
 import com.nttdata.bank.credit.dto.AmountRequest;
 import com.nttdata.bank.credit.dto.BalanceResponse;
 import com.nttdata.bank.credit.dto.CreditCardRequest;
+import com.nttdata.bank.credit.dto.PaymentRequest;
 import com.nttdata.bank.credit.model.CreditCard;
 import com.nttdata.bank.credit.model.CreditMovement;
 import io.reactivex.rxjava3.core.Completable;
@@ -31,7 +32,7 @@ public interface CreditCardService {
   Single<CreditMovement> charge(String id, AmountRequest request);
 
   /** Registers a payment on a card. */
-  Single<CreditMovement> pay(String id, AmountRequest request);
+  Single<CreditMovement> pay(String id, PaymentRequest request);
 
   /** Returns the balance of a card. */
   Single<BalanceResponse> getBalance(String id);

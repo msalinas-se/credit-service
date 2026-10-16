@@ -8,6 +8,7 @@ import com.nttdata.bank.credit.client.dto.CustomerDto;
 import com.nttdata.bank.credit.config.CreditProperties;
 import com.nttdata.bank.credit.dto.AmountRequest;
 import com.nttdata.bank.credit.dto.CreditRequest;
+import com.nttdata.bank.credit.dto.PaymentRequest;
 import com.nttdata.bank.credit.exception.BusinessRuleException;
 import com.nttdata.bank.credit.exception.ResourceNotFoundException;
 import com.nttdata.bank.credit.model.Credit;
@@ -39,16 +40,19 @@ class CreditServiceImplTest {
   @Mock
   private CustomerClient customerClient;
 
+  @Mock
+  private DebtService debtService;
+
   private CreditServiceImpl creditService;
 
   @BeforeEach
   void setUp() {
     creditService = new CreditServiceImpl(creditRepository, movementRepository, customerClient,
-        new CreditProperties(1));
+        new CreditProperties(1), debtService);
   }
 
   private Credit credit() {
-    return Credit.builder().id("c1").amount(new BigDecimal("100"))
+    return Credit.builder().id("c1").customerId("1").amount(new BigDecimal("100"))
         .outstandingBalance(new BigDecimal("100")).build();
   }
 
@@ -57,14 +61,20 @@ class CreditServiceImplTest {
         .thenAnswer(invocation -> Single.just(invocation.getArgument(0)));
   }
 
+  private void noDebt(String customerId) {
+    when(debtService.validateNoOverdueDebt(customerId)).thenReturn(Completable.complete());
+    when(debtService.publishStatus(customerId)).thenReturn(Completable.complete());
+  }
+
   @Test
   void createPersonalCredit() {
     when(customerClient.findById("1"))
         .thenReturn(Single.just(new CustomerDto("1", CustomerType.PERSONAL, "45678912", "Ana")));
+    noDebt("1");
     when(creditRepository.countByCustomerId("1")).thenReturn(Single.just(0L));
     saveReturnsArgument();
 
-    creditService.create(new CreditRequest("1", new BigDecimal("5000"))).test()
+    creditService.create(new CreditRequest("1", new BigDecimal("5000"), null)).test()
         .assertValue(credit -> credit.getOutstandingBalance().intValue() == 5000);
   }
 
@@ -72,18 +82,31 @@ class CreditServiceImplTest {
   void createBusinessCredit() {
     when(customerClient.findById("2"))
         .thenReturn(Single.just(new CustomerDto("2", CustomerType.BUSINESS, "20123456789", "Acme")));
+    noDebt("2");
     saveReturnsArgument();
 
-    creditService.create(new CreditRequest("2", new BigDecimal("5000"))).test().assertComplete();
+    creditService.create(new CreditRequest("2", new BigDecimal("5000"), null)).test().assertComplete();
   }
 
   @Test
   void personalCustomerCannotHaveTwoCredits() {
     when(customerClient.findById("1"))
         .thenReturn(Single.just(new CustomerDto("1", CustomerType.PERSONAL, "45678912", "Ana")));
+    when(debtService.validateNoOverdueDebt("1")).thenReturn(Completable.complete());
     when(creditRepository.countByCustomerId("1")).thenReturn(Single.just(1L));
 
-    creditService.create(new CreditRequest("1", new BigDecimal("5000"))).test()
+    creditService.create(new CreditRequest("1", new BigDecimal("5000"), null)).test()
+        .assertError(BusinessRuleException.class);
+  }
+
+  @Test
+  void customerWithOverdueDebtCannotGetCredit() {
+    when(customerClient.findById("1"))
+        .thenReturn(Single.just(new CustomerDto("1", CustomerType.PERSONAL, "45678912", "Ana")));
+    when(debtService.validateNoOverdueDebt("1")).thenReturn(Completable.error(
+        new BusinessRuleException("OVERDUE_DEBT", "overdue")));
+
+    creditService.create(new CreditRequest("1", BigDecimal.TEN, null)).test()
         .assertError(BusinessRuleException.class);
   }
 
@@ -127,21 +150,23 @@ class CreditServiceImplTest {
   }
 
   @Test
-  void payCredit() {
+  void payCreditFromThirdParty() {
     when(creditRepository.findById("c1")).thenReturn(Maybe.just(credit()));
+    when(debtService.publishStatus("1")).thenReturn(Completable.complete());
     saveReturnsArgument();
     when(movementRepository.save(any(CreditMovement.class)))
         .thenAnswer(invocation -> Single.just(invocation.getArgument(0)));
 
-    creditService.pay("c1", new AmountRequest(new BigDecimal("40"))).test()
-        .assertValue(movement -> movement.getAmount().intValue() == 40);
+    creditService.pay("c1", new PaymentRequest(new BigDecimal("40"), "3")).test()
+        .assertValue(movement -> movement.getAmount().intValue() == 40
+            && "3".equals(movement.getPayerId()));
   }
 
   @Test
   void paymentGreaterThanDebt() {
     when(creditRepository.findById("c1")).thenReturn(Maybe.just(credit()));
 
-    creditService.pay("c1", new AmountRequest(new BigDecimal("200"))).test()
+    creditService.pay("c1", new PaymentRequest(new BigDecimal("200"), null)).test()
         .assertError(BusinessRuleException.class);
   }
 
