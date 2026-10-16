@@ -14,6 +14,9 @@ classDiagram
   CreditCardServiceImpl --> CustomerClient
   CreditServiceImpl --> CreditMovementRepository
   CreditCardServiceImpl --> CreditMovementRepository
+  ReportController --> ReportService
+  ReportServiceImpl ..|> ReportService
+  ReportServiceImpl --> CreditMovementRepository
   class Credit {
     String id
     String customerId
@@ -65,4 +68,15 @@ sequenceDiagram
     CreditCardServiceImpl->>CreditMovementRepository: save(movement)
     CreditCardServiceImpl-->>Postman: 201 Created
   end
+```
+
+## Secuencia: reporte por producto
+
+```mermaid
+sequenceDiagram
+  Postman->>ReportController: GET /credits/report?from=&to=
+  ReportController->>ReportServiceImpl: productReport(from, to)
+  ReportServiceImpl->>CreditMovementRepository: findByDateBetween()
+  ReportServiceImpl->>ReportServiceImpl: agrupar por producto
+  ReportServiceImpl-->>Postman: 200 OK
 ```

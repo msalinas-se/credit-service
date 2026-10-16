@@ -42,6 +42,44 @@ paths:
                 $ref: '#/components/schemas/Credit'
         '400':
           description: Bad request
+  /credits/report:
+    get:
+      summary: Report by product between two dates
+      parameters:
+        - name: from
+          in: query
+          required: true
+          schema:
+            type: string
+            format: date
+        - name: to
+          in: query
+          required: true
+          schema:
+            type: string
+            format: date
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties:
+                  type: object
+                  properties:
+                    products:
+                      type: integer
+                    totalMovements:
+                      type: integer
+                    totals:
+                      type: object
+                      additionalProperties:
+                        type: number
+                    movements:
+                      type: array
+                      items:
+                        $ref: '#/components/schemas/Movement'
   /credits/{id}:
     parameters:
       - $ref: '#/components/parameters/Id'
@@ -230,6 +268,20 @@ paths:
       - $ref: '#/components/parameters/Id'
     get:
       summary: List credit card movements
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Movement'
+  /credit-cards/{id}/movements/last:
+    parameters:
+      - $ref: '#/components/parameters/Id'
+    get:
+      summary: Last 10 movements of a credit card
       responses:
         '200':
           description: OK

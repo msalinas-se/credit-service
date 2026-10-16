@@ -11,3 +11,10 @@ services:
 
 credit:
   personal-max-credits: 1
+
+circuit-breaker:
+  timeout: 2s
+
+eureka:
+  client:
+    enabled: false

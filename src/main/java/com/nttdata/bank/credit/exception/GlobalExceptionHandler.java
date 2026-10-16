@@ -28,6 +28,14 @@ public class GlobalExceptionHandler {
     return ResponseEntity.badRequest().body(new ErrorResponse(ex.getCode(), ex.getMessage()));
   }
 
+  /** Handles calls to other microservices that failed. */
+  @ExceptionHandler(ServiceUnavailableException.class)
+  public ResponseEntity<ErrorResponse> handleUnavailable(ServiceUnavailableException ex) {
+    log.error(ex.getMessage());
+    return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
+        .body(new ErrorResponse("SERVICE_UNAVAILABLE", ex.getMessage()));
+  }
+
   /** Handles request body validation errors. */
   @ExceptionHandler(WebExchangeBindException.class)
   public ResponseEntity<ErrorResponse> handleValidation(WebExchangeBindException ex) {
