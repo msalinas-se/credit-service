@@ -132,6 +132,7 @@ public class CreditCardServiceImpl implements CreditCardService {
     return movementRepository.findByProductIdOrderByDateDesc(id);
   }
 
+  /** Saves the card and registers its movement. */
   private Single<CreditMovement> save(CreditCard card, CreditMovementType type,
       BigDecimal amount, String payerId) {
     return creditCardRepository.save(card)

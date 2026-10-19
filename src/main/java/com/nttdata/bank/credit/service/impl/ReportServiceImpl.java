@@ -37,6 +37,7 @@ public class ReportServiceImpl implements ReportService {
     return movementRepository.findTop10ByProductIdOrderByDateDesc(creditCardId);
   }
 
+  /** Builds the report of the movements of one product. */
   private ProductReport toReport(List<CreditMovement> movements) {
     long products = movements.stream().map(CreditMovement::getProductId).distinct().count();
     var totals = movements.stream()
